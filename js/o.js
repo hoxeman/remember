@@ -73,12 +73,25 @@ forTwoArrays = function(ary1, ary2, action){
     }
     return true;
 };
+//=================================================
+forTwinArrays = function(ary1, ary2, action){
+    if (ary1.length != ary2.length) return false;
+    for(var i=0; i < ary1.length; i++){
+        action(ary1[i],ary2[i]);
+    }
+    return true;
+};
 //===================================================
 function callAfterMilliseconds(functionName,delay){
     return  setTimeout(functionName, delay)
 }
 //=====================================================
-
+function _forTripletArrays(a1,a2,a3,action){
+	for(var i = 0; i < a2.length; i++){
+		action(a1[i],a2[i],a3[i]);
+	}
+}
+//====================================================
 
 
 

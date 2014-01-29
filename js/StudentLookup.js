@@ -1,4 +1,5 @@
 //==============DATA=======================
+var infoFields = ["major","lastName","firstName","3","4","5","homeMail","schoolMail","homePhone","cellPhone" ,"workPhone","otherPhone"]
 var ajax = new HttpObject()
 , records = []
 , recordCount = 0
@@ -11,25 +12,25 @@ var ajax = new HttpObject()
 , matchCount = 0
 , currentMatch = ""
 ;
-//==============Handlers and Functions=============
-objectEventHandler( window, "load", init );
-//=================================================
-objectEventHandler( o("match"), "keyup", search );
-//=================================================
-objectEventHandler( o("match"), "change", search );
-//=================================================
-objectEventHandler( document.body, "keydown", showNext );
-//=================================================
-var actionFields = ["field6","field7","field8","field9","field10","field11"];
+//=================Event Handlers===============
+var objects = [  window, o("match"),  o("match"),  document.body];
+var events =  [  "load",    "keyup",    "change",      "keydown"];
+var handlers =[    init,     search,      search,       showNext];
+_forTripletArrays(objects, events, handlers, function(anObject, anEvent, aHandler){
+	objectEventHandler( anObject, anEvent, aHandler );
+    //attachEventHandler( anObject, anEvent, aHandler );
+}); 
+//==============================================
+var actionFields = ["homeMail","schoolMail","homePhone","cellPhone","workPhone","otherPhone"];
 forAll( actionFields, function( field ) {
     objectEventHandler(o(field), "mouseover", function() { highlight(field); } ); 
     objectEventHandler(o(field), "mouseout", function() { highlight(field); } );
     objectEventHandler(o(field), "click", function() { emailOrCall(field); } );     
 });
 //=================================================
-var buttons = ["f","r","rs","fs","btnClear"];
+var buttons  = ["f"    ,"r"    ,"rs"       ,"fs"       ,"btnClear" ];
 var handlers = [forward,reverse,reverseStop,forwardStop,clearSearch];
-forTwoArrays(buttons, handlers, function(button,handler){
+forTwinArrays(buttons, handlers, function(button,handler){
     objectEventHandler(o(button), "click", handler);
 });
 //==============Forward Button Handler=============
@@ -70,19 +71,21 @@ function pointToFirstRecord(){
 }
 //------------------------------------------------
 function nowShowRecord(){
+	
     try{
         var record = records[recordPointer].split(",");
     }
     catch(err){
         return; //in case records[recordPointer] is undefined and can't split()
     }
-    o("field0").value = record[0];
-    for( var i = 1; i< record.length; i++ ) {
-        try{
-            o("field"+i.toString()).value = " " + record[i];
-        }
-        catch(err){continue;}
-    }
+
+	for ( var i = 0; i < record.length; i++ ) {
+		try{
+            o(infoFields[i]).value = " " + record[i];		
+		}
+		catch(err){continue;}
+	}
+	
     o("c").innerHTML = recordPointer;
     if( matchCount != 0 ){
         o('matchIndex').innerHTML = indexPointer +1;
@@ -134,6 +137,7 @@ function fastForward(){
     else greenLight = true;        
 }
 //----------------Stop fast forward---------------
+//Cruft:yagni. Fast forward buttons are gone (and not used)
 function stopFastForward(){
     greenLight = false;
 }
@@ -172,23 +176,48 @@ function search(){
         o("match").focus();
         matchCount = 0;
         o('sp').innerHTML = singularPlural("match", matchCount);        
-        currentMatch = ""
+        currentMatch = "";
         return;
     }
     //---------------------------------------------
     try{
+        /*
         if ( (typeof window.event != undefined) && window.event.keyCode === 13 ){ 
+            forward();
+        }
+        */         
+         if ( enterKey(event) ) {
             forward();
             return;
         }
     }
-    catch(err) 
-    {
-        if( o("match").value.toLowerCase() == currentMatch.toLowerCase() ) return;
-    }
-    
+    catch(err){} 
+    if( noNewMatches() ) return;    
+    tallyMatches();
+    showFirstMatchIfAny();   
+}
+//=================================================
+function noNewMatches(){
+    return o("match").value.toLowerCase() == currentMatch.toLowerCase();
+}
+//-----------------------------------------------
+//Source: http://www.beneskew.com/2010/10/catching-the-enter-key-the-cross-browser-friendly-way-javascript/
+function enterKey(e){
+    var theKey = 0;
+    e = (window.event)?event:e;
+    theKey = (e.keyCode)?e.keyCode:e.charCode;
+    if(theKey == "13") return true;
+    else return false;
+}
+//--------------------------------------------------
+function matchFound(i){
+    return records[i].toLowerCase().indexOf(o("match").value.toLowerCase() ) != -1;
+}
+//-------------------------------------------------
+function tallyMatches(){
     matchCount = 0;
     matchIndexes.length = 0;
+    indexPointer = 0; 
     for ( var i = 1; i < recordCount; i++){
         if ( matchFound(i) ) {
             matchIndexes.push(i);
@@ -197,25 +226,19 @@ function search(){
     }
     o('sp').innerHTML = singularPlural("match", matchCount);   
     currentMatch = o("match").value.toLowerCase();
-    
-    indexPointer = 0;    
+}
+//=================================================
+function showFirstMatchIfAny(){
     if ( matchCount !== 0 ){
         recordPointer = matchIndexes[0];
         o('matchIndex').innerHTML = "1";
-        o('sp').innerHTML = singularPlural("match", matchCount);
         nowShowRecord();
     }
     else{
-        o('matchCount').innerHTML = "0";
-        o('sp').innerHTML = "matches ";
         o('matchIndex').innerHTML = "0";
     }
     o('matchCount').innerHTML = matchCount.toString();
     o('sp').innerHTML = singularPlural("match", matchCount);    
-}
-//=================================================
-function matchFound(i){
-    return records[i].toLowerCase().indexOf(o("match").value.toLowerCase() ) != -1;
 }
 //=================================================
 function clearSearch(){
@@ -230,7 +253,9 @@ function clearSearch(){
 //=================================================
 function init(){
     o("match").focus();
-    ajax.open("GET", "https://dl.dropbox.com/u/21142484/StudentNames/ComputerStudents.csv", true );
+    ajax.open("GET", "https://dl.dropboxusercontent.com/u/21142484/StudentNames/ComputerStudents.csv", true );
+    //https://dl.dropboxusercontent.com/u/21142484/StudentNames/ComputerStudents.csv
+    //https://dl.dropbox.com/u/21142484/StudentNames/ComputerStudents.csv
     ajax.onreadystatechange = function() {
         if ( ajax.readyState == 4 ){
             if ( ajax.status == 200 || ajax.status == 0 ){
@@ -255,7 +280,7 @@ function singularPlural(word,count){
 function deselect(){
     try{
         if ( typeof document.selection.empty() == "function" ){  // IE
-        document.selection.empty();
+            document.selection.empty();
         }
     }
     catch(e) {window.getSelection().removeAllRanges();}  // Most Browsers
@@ -278,7 +303,7 @@ function highlight(id){
 }
 //===============================================
 function emailOrCall( id ){
-    if( o(id) == o("field6") || o(id) == o("field7") ){
+    if( o(id) == o("homeMail") || o(id) == o("schoolMail") ){
         sendEmail(id);
     }
     else{
@@ -289,14 +314,14 @@ function emailOrCall( id ){
 function sendEmail(id){
     if ( confirm("OK to send email?") ){        
         document.location.href = "mailto:"+
-        o('field2').value+
+        o('firstName').value+
         " "+
-        o('field1').value+
+        o('lastName').value+
         " "+
         "<"+
         o(id).value.trim()+
         "> ?"+
-        "cc="+o( ( id === "field6" ) ? "field7" : "field6" ).value;
+        "cc="+o( ( id === "homeMail" ) ? "schoolMail" : "homeMail" ).value;
     }
 }
 //==============================================

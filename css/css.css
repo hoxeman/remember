@@ -3,8 +3,7 @@
         #background-color: #ccffff;
     }
     body{
-        background-color: #eee
-        #6F839C;
+        background-color: #6F839C;
         #f0f0f0;
         #97ABC4;
     }
@@ -26,8 +25,8 @@
         #margin-bottom: 15px;
         #margin-right: 15px;
         #margin-left: 15px;
-        width: 350px;
-        height: 502px;      
+        width: 100%;
+        height: 100%;      
         #350px; 
         #590px;
         #border-radius: 10px;
